@@ -2,675 +2,264 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#7715b8">
-<meta name="description" content="Play Candy Blast Deluxe, the exciting candy matching puzzle adventure!">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#28105f">
+<meta name="description" content="Candy Blast Deluxe — match colorful candies, unleash boosters and conquer puzzle levels.">
 <title>Candy Blast Deluxe</title>
-
 <style>
+:root{
+  --ink:#fff; --glass:rgba(255,255,255,.13); --line:rgba(255,255,255,.22);
+  --gold:#ffe66d; --pink:#ff79c6; --purple:#28105f; --deep:#160a3b;
+}
 *{box-sizing:border-box}
-
 body{
- margin:0;
- font-family:Arial,sans-serif;
- background:linear-gradient(145deg,#391078,#9b35d6,#ff70bb);
- color:white;
- text-align:center;
- min-height:100vh;
- padding:15px;
+  margin:0; min-height:100vh; padding:18px 12px 30px; color:var(--ink);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  text-align:center; overflow-x:hidden;
+  background:
+    radial-gradient(circle at 12% 8%,rgba(255,117,198,.55),transparent 28%),
+    radial-gradient(circle at 90% 20%,rgba(104,220,255,.28),transparent 25%),
+    linear-gradient(145deg,#18083f 0%,#4c168a 48%,#a52d9c 100%);
 }
-
-.container{
- max-width:480px;
- margin:auto;
+body:before,body:after{
+  content:"";position:fixed;width:220px;height:220px;border-radius:50%;
+  background:rgba(255,255,255,.055);filter:blur(2px);pointer-events:none;z-index:-1
 }
-
-h1{
- font-size:32px;
- margin:12px 0 5px;
- text-shadow:0 3px 8px #30004f;
-}
-
-.subtitle{
- margin-bottom:18px;
- color:#ffe4ff;
-}
-
-.stats{
- display:grid;
- grid-template-columns:repeat(3,1fr);
- gap:8px;
- margin-bottom:15px;
-}
-
-.stat{
- background:#ffffff24;
- border:1px solid #ffffff55;
- border-radius:14px;
- padding:12px 5px;
- font-weight:bold;
-}
-
-.stat span{
- display:block;
- font-size:20px;
- margin-top:5px;
-}
-
-.panel{
- background:#ffffff20;
- padding:15px;
- border-radius:20px;
- margin-bottom:14px;
-}
-
-.progress{
- height:12px;
- background:#ffffff40;
- border-radius:20px;
- overflow:hidden;
- margin:10px 0;
-}
-
-#progressBar{
- height:100%;
- width:0%;
- background:#ffe34d;
- transition:width .3s;
-}
-
-#board{
- display:grid;
- grid-template-columns:repeat(8,1fr);
- gap:4px;
- padding:7px;
- background:#390b70;
- border-radius:15px;
-}
-
-.cell{
- aspect-ratio:1;
- border-radius:10px;
- border:2px solid #ffffff30;
- background:#ffffff20;
- display:flex;
- justify-content:center;
- align-items:center;
- font-size:clamp(19px,6vw,29px);
- cursor:pointer;
- user-select:none;
- transition:transform .15s,background .15s;
-}
-
-.cell.selected{
- border:3px solid #ffe34d;
- transform:scale(.91);
- background:#ffffff65;
-}
-
-.cell:active{
- transform:scale(.88);
-}
-
-.buttons{
- display:grid;
- grid-template-columns:repeat(2,1fr);
- gap:9px;
- margin-top:14px;
-}
-
-button{
- border:0;
- border-radius:12px;
- padding:13px 8px;
- font-size:14px;
- font-weight:bold;
- cursor:pointer;
- background:#ffe34d;
- color:#48106d;
-}
-
-button:active{
- transform:scale(.96);
-}
-
-.boosters{
- display:grid;
- grid-template-columns:repeat(3,1fr);
- gap:8px;
- margin-top:12px;
-}
-
-.boosters button{
- background:#ff8cc9;
-}
-
-.message{
- min-height:25px;
- font-weight:bold;
- margin-top:12px;
- color:#fff4a5;
-}
-
-.overlay{
- display:none;
- position:fixed;
- inset:0;
- background:#16002bea;
- z-index:10;
- align-items:center;
- justify-content:center;
- padding:20px;
-}
-
-.modal{
- width:100%;
- max-width:350px;
- background:linear-gradient(145deg,#9c35dc,#50128d);
- padding:25px;
- border-radius:22px;
- box-shadow:0 10px 40px #0008;
-}
-
-.modal h2{
- font-size:27px;
-}
-
-.modal button{
- width:100%;
- margin-top:12px;
-}
-
-footer{
- margin-top:20px;
- font-size:12px;
- opacity:.8;
-}
+body:before{top:30%;left:-110px} body:after{right:-110px;bottom:5%}
+.app{width:min(100%,470px);margin:auto}
+.topline{display:flex;justify-content:space-between;align-items:center;margin:0 2px 8px}
+.badge{font-size:11px;font-weight:900;letter-spacing:1.5px;padding:7px 11px;border:1px solid var(--line);border-radius:99px;background:rgba(255,255,255,.09)}
+.brand{margin:10px 0 2px;font-size:clamp(29px,8vw,39px);font-weight:1000;letter-spacing:-1.5px;text-shadow:0 4px 0 #5b187c,0 8px 20px #12052d}
+.brand .candy{display:inline-block;filter:drop-shadow(0 4px 5px #16052b);animation:bob 2.2s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-5px) rotate(5deg)}}
+.tagline{font-size:12px;letter-spacing:2px;font-weight:800;color:#ffe4ff;margin-bottom:16px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:10px}
+.stat{background:linear-gradient(150deg,rgba(255,255,255,.2),rgba(255,255,255,.08));border:1px solid var(--line);border-radius:16px;padding:9px 4px;box-shadow:0 7px 18px #12052b33}
+.stat small{display:block;font-size:10px;letter-spacing:1px;font-weight:900;opacity:.85}
+.stat strong{display:block;font-size:21px;margin-top:2px}
+.card{background:linear-gradient(145deg,rgba(255,255,255,.17),rgba(255,255,255,.075));border:1px solid var(--line);border-radius:21px;padding:13px;margin-bottom:11px;box-shadow:0 12px 30px #13052b38;backdrop-filter:blur(12px)}
+.goalrow{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:900}
+.goalrow strong{color:var(--gold);font-size:15px}
+.progress{height:10px;background:rgba(10,3,35,.42);border-radius:99px;overflow:hidden;margin:9px 0 7px;border:1px solid #ffffff20}
+#progressBar{height:100%;width:0;background:linear-gradient(90deg,#fff176,#ffb83d,#ff79c6);border-radius:99px;transition:width .35s;box-shadow:0 0 12px #ffe66d99}
+#board{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px;padding:7px;border-radius:17px;background:linear-gradient(145deg,#21084d,#35106b);border:2px solid #ffffff30;box-shadow:inset 0 3px 12px #09001f99,0 9px 20px #10032666;touch-action:manipulation}
+.cell{aspect-ratio:1;min-width:0;display:flex;align-items:center;justify-content:center;border-radius:9px;font-size:clamp(19px,6vw,29px);cursor:pointer;user-select:none;background:linear-gradient(145deg,rgba(255,255,255,.23),rgba(255,255,255,.07));border:1px solid rgba(255,255,255,.16);text-shadow:0 3px 4px #16052d88;transition:transform .13s,filter .13s,background .13s;position:relative;overflow:hidden}
+.cell:active{transform:scale(.88)}
+.cell.selected{outline:3px solid var(--gold);background:rgba(255,230,109,.3);transform:scale(.93);z-index:1}
+.cell.pop{animation:pop .22s ease}
+@keyframes pop{0%{transform:scale(.5);opacity:.25}75%{transform:scale(1.13)}100%{transform:scale(1);opacity:1}}
+.cell.blast{animation:blast .22s ease forwards}
+@keyframes blast{to{transform:scale(.2) rotate(25deg);opacity:0}}
+.booster-title{font-size:11px;font-weight:1000;letter-spacing:1.5px;opacity:.9;margin:0 0 9px}
+.boosters{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+button{font:inherit;cursor:pointer;border:0;transition:transform .12s,filter .12s}
+button:active{transform:scale(.96)}
+.boosters button,.actions button{border-radius:13px;padding:10px 4px;font-size:12px;font-weight:950;color:#37105f;background:linear-gradient(180deg,#fff0a0,#ffc94d);box-shadow:0 4px 0 #bd7b26,0 7px 12px #10032633}
+.boosters button:nth-child(2){background:linear-gradient(180deg,#ffd3f0,#ff83c8);box-shadow:0 4px 0 #b84387,0 7px 12px #10032633}
+.boosters button:nth-child(3){background:linear-gradient(180deg,#d8f6ff,#83dfff);box-shadow:0 4px 0 #3986b5,0 7px 12px #10032633}
+.boosters button span{display:block;font-size:10px;margin-top:3px}
+.actions{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:11px}
+.actions button{background:rgba(255,255,255,.16);color:white;border:1px solid var(--line);box-shadow:none;padding:11px}
+#message{min-height:22px;margin:11px 0 0;font-size:12px;font-weight:850;color:#fff3a7}
+.footer{font-size:10px;opacity:.7;margin:16px 0 0;letter-spacing:.5px}
+.overlay{display:none;position:fixed;inset:0;z-index:5;background:rgba(12,2,35,.82);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:20px}
+.modal{width:min(100%,340px);padding:25px 20px;border-radius:24px;background:linear-gradient(145deg,#9b39d3,#4b168c);border:1px solid #ffffff55;box-shadow:0 20px 60px #0008}
+.modal h2{font-size:27px;margin:0 0 8px}.modal p{font-size:14px;line-height:1.5}
+.modal button{width:100%;padding:13px;border-radius:13px;margin-top:9px;background:linear-gradient(180deg,#fff0a0,#ffc94d);font-weight:950;color:#37105f}
+.modal button.secondary{background:rgba(255,255,255,.16);color:white;border:1px solid var(--line)}
+@media(max-width:360px){body{padding:12px 8px}.cell{font-size:19px;gap:3px}#board{gap:3px;padding:5px}}
 </style>
 </head>
-
 <body>
+<div class="app">
+  <div class="topline"><span class="badge">✨ DELUXE EDITION</span><span class="badge">🍬 PUZZLE ADVENTURE</span></div>
+  <h1 class="brand"><span class="candy">🍬</span> Candy Blast <span class="candy">🍭</span></h1>
+  <div class="tagline">MATCH • BLAST • WIN</div>
 
-<div class="container">
+  <section class="stats">
+    <div class="stat"><small>❤️ LIVES</small><strong id="lives">5</strong></div>
+    <div class="stat"><small>⭐ SCORE</small><strong id="score">0</strong></div>
+    <div class="stat"><small>🏆 LEVEL</small><strong id="level">1</strong></div>
+  </section>
 
-<h1>🍬 Candy Blast 🍭</h1>
-<div class="subtitle">✨ Match • Blast • Win ✨</div>
+  <section class="card">
+    <div class="goalrow"><span>🎯 LEVEL TARGET</span><strong id="target">300</strong></div>
+    <div class="progress"><div id="progressBar"></div></div>
+    <div class="goalrow"><span>👣 MOVES LEFT</span><strong id="moves">20</strong></div>
+  </section>
 
-<div class="stats">
- <div class="stat">❤️ Lives<span id="lives">5</span></div>
- <div class="stat">⭐ Score<span id="score">0</span></div>
- <div class="stat">🏆 Level<span id="level">1</span></div>
-</div>
+  <section class="card">
+    <div id="board" aria-label="Candy matching game board"></div>
+    <div id="message" role="status">Match 3 or more candies to score!</div>
+  </section>
 
-<div class="panel">
- <div>Target: <b id="target">300</b></div>
- <div class="progress">
-  <div id="progressBar"></div>
- </div>
- <div>Moves remaining: <b id="moves">20</b></div>
-</div>
-
-<div id="board"></div>
-
-<div class="boosters">
- <button onclick="useBooster('bomb')">💣 Bomb <span id="bombCount">3</span></button>
- <button onclick="useBooster('rainbow')">🌈 Rainbow <span id="rainbowCount">3</span></button>
- <button onclick="useBooster('shuffle')">🔀 Shuffle</button>
-</div>
-
-<div class="buttons">
- <button onclick="restartLevel()">🔄 Restart</button>
- <button onclick="toggleSound()">🔊 <span id="soundText">Sound ON</span></button>
- <button onclick="dailyReward()">🎁 Daily Reward</button>
- <button onclick="showHome()">🏠 Home</button>
-</div>
-
-<div class="message" id="message">Match 3 or more candies to score!</div>
-
-<footer>
- Candy Blast Deluxe • Match candies and conquer levels!
-</footer>
-
+  <section class="card">
+    <div class="booster-title">⚡ POWER-UPS</div>
+    <div class="boosters">
+      <button onclick="useBooster('bomb')">💣 BOMB<span id="bombCount">3 available</span></button>
+      <button onclick="useBooster('rainbow')">🌈 RAINBOW<span id="rainbowCount">3 available</span></button>
+      <button onclick="useBooster('shuffle')">🔀 SHUFFLE<span>Mix the board</span></button>
+    </div>
+    <div class="actions">
+      <button onclick="restartLevel()">↻ RESTART LEVEL</button>
+      <button onclick="toggleSound()">🔊 <span id="soundText">SOUND ON</span></button>
+      <button onclick="dailyReward()">🎁 DAILY GIFT</button>
+      <button onclick="showHome()">⌂ HOME</button>
+    </div>
+  </section>
+  <div class="footer">CANDY BLAST DELUXE • SWEET FUN, BIG CHALLENGES</div>
 </div>
 
 <div class="overlay" id="overlay">
- <div class="modal">
-  <h2 id="modalTitle">Level Complete!</h2>
-  <p id="modalText"></p>
-  <button onclick="nextLevel()">Continue 🚀</button>
-  <button onclick="closeOverlay()">Close</button>
- </div>
+  <div class="modal">
+    <h2 id="modalTitle">🏆 Level Complete!</h2>
+    <p id="modalText"></p>
+    <button id="modalPrimary" onclick="nextLevel()">CONTINUE</button>
+    <button class="secondary" onclick="closeOverlay()">CLOSE</button>
+  </div>
 </div>
 
 <script>
-const SIZE=8;
-
-const candies=[
- "🍬","🍭","🍒","🍇","🍊","🍓"
-];
-
-let board=[];
-let selected=null;
-let score=0;
-let level=1;
-let lives=5;
-let moves=20;
-let coins=0;
-let bombs=3;
-let rainbows=3;
-let sound=true;
-let busy=false;
-let won=false;
-let lost=false;
-let boosterMode=null;
-
-const saved=localStorage.getItem("candyBlastDeluxe");
-
-if(saved){
- try{
-  const data=JSON.parse(saved);
-  score=data.score||0;
-  level=data.level||1;
-  lives=data.lives??5;
-  coins=data.coins||0;
-  bombs=data.bombs??3;
-  rainbows=data.rainbows??3;
- }catch(e){}
-}
-
+"use strict";
+const SIZE=8, candies=["🍬","🍭","🍒","🍇","🍊","🍓"];
+let board=[],selected=null,score=0,level=1,lives=5,moves=20,coins=0,bombs=3,rainbows=3;
+let sound=true,busy=false,won=false,lost=false,boosterMode=null;
+try{
+ const data=JSON.parse(localStorage.getItem("candyBlastDeluxe")||"null");
+ if(data){score=data.score||0;level=data.level||1;lives=data.lives??5;coins=data.coins||0;bombs=data.bombs??3;rainbows=data.rainbows??3;}
+}catch(e){}
 const $=id=>document.getElementById(id);
-
-function targetScore(){
- return level*300;
-}
-
-function randomCandy(){
- return candies[Math.floor(Math.random()*candies.length)];
-}
-
+const targetScore=()=>level*300;
+const randomCandy=()=>candies[Math.floor(Math.random()*candies.length)];
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+function save(){localStorage.setItem("candyBlastDeluxe",JSON.stringify({score,level,lives,coins,bombs,rainbows}));}
 function createBoard(){
  board=Array.from({length:SIZE},()=>Array(SIZE).fill(null));
-
- for(let r=0;r<SIZE;r++){
-  for(let c=0;c<SIZE;c++){
-   let candy;
-   do{
-    candy=randomCandy();
-   }while(
-    (c>=2 && board[r][c-1]===candy && board[r][c-2]===candy)||
-    (r>=2 && board[r-1][c]===candy && board[r-2][c]===candy)
-   );
-   board[r][c]=candy;
-  }
+ for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
+  let v;do{v=randomCandy();}while((c>1&&board[r][c-1]===v&&board[r][c-2]===v)||(r>1&&board[r-1][c]===v&&board[r-2][c]===v));
+  board[r][c]=v;
  }
-
- render();
+ selected=null;render(true);
 }
-
-function render(){
- const el=$("board");
- el.innerHTML="";
-
- for(let r=0;r<SIZE;r++){
-  for(let c=0;c<SIZE;c++){
-   const cell=document.createElement("div");
-   cell.className="cell";
-   cell.textContent=board[r][c]||"";
-   cell.dataset.r=r;
-   cell.dataset.c=c;
-
-   if(selected && selected.r===r && selected.c===c){
-    cell.classList.add("selected");
-   }
-
-   cell.onclick=()=>tapCell(r,c);
-   el.appendChild(cell);
-  }
+function render(animate=false){
+ const el=$("board");el.innerHTML="";
+ for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
+  const cell=document.createElement("button");cell.type="button";cell.className="cell";
+  cell.textContent=board[r][c]||"";cell.setAttribute("aria-label","Row "+(r+1)+", column "+(c+1));
+  if(selected&&selected.r===r&&selected.c===c)cell.classList.add("selected");
+  if(animate)cell.classList.add("pop");
+  cell.onclick=()=>tapCell(r,c);el.appendChild(cell);
  }
-
  updateStats();
 }
-
 function updateStats(){
- $("score").textContent=score;
- $("level").textContent=level;
- $("lives").textContent=lives;
- $("moves").textContent=moves;
- $("target").textContent=targetScore();
- $("bombCount").textContent=bombs;
- $("rainbowCount").textContent=rainbows;
- $("progressBar").style.width=
- Math.min(100,score/targetScore()*100)+"%";
- $("soundText").textContent=sound?"Sound ON":"Sound OFF";
+ $("score").textContent=score;$("level").textContent=level;$("lives").textContent=lives;
+ $("moves").textContent=moves;$("target").textContent=targetScore();
+ $("progressBar").style.width=Math.min(100,score/targetScore()*100)+"%";
+ $("bombCount").textContent=bombs+" available";$("rainbowCount").textContent=rainbows+" available";
+ $("soundText").textContent=sound?"SOUND ON":"SOUND OFF";
 }
-
-function save(){
- localStorage.setItem("candyBlastDeluxe",JSON.stringify({
-  score,level,lives,coins,bombs,rainbows
- }));
-}
-
-function adjacent(a,b){
- return Math.abs(a.r-b.r)+Math.abs(a.c-b.c)===1;
-}
-
+function adjacent(a,b){return Math.abs(a.r-b.r)+Math.abs(a.c-b.c)===1;}
 async function tapCell(r,c){
  if(busy||won||lost)return;
-
- if(boosterMode){
-  await applyBooster(r,c);
-  return;
- }
-
+ if(boosterMode){await applyBooster(r,c);return;}
  const current={r,c};
-
- if(!selected){
-  selected=current;
-  render();
-  return;
- }
-
- if(selected.r===r&&selected.c===c){
-  selected=null;
-  render();
-  return;
- }
-
- if(!adjacent(selected,current)){
-  selected=current;
-  render();
-  return;
- }
-
- const first=selected;
- selected=null;
-
- [board[first.r][first.c],board[r][c]]=
- [board[r][c],board[first.r][first.c]];
-
+ if(!selected){selected=current;render();return;}
+ if(selected.r===r&&selected.c===c){selected=null;render();return;}
+ if(!adjacent(selected,current)){selected=current;render();return;}
+ const first=selected;selected=null;
+ [board[first.r][first.c],board[r][c]]=[board[r][c],board[first.r][first.c]];
  render();
-
- if(findMatches().length===0){
-  await sleep(180);
-  [board[first.r][first.c],board[r][c]]=
-  [board[r][c],board[first.r][first.c]];
-  render();
-  $("message").textContent="No match! Try another move.";
-  return;
+ if(!findMatches().length){
+  await sleep(160);[board[first.r][first.c],board[r][c]]=[board[r][c],board[first.r][first.c]];
+  render();$("message").textContent="No match — try another move.";return;
  }
-
- moves--;
- playSound();
- await resolveMatches();
- checkGame();
+ moves--;playSound();busy=true;await resolveMatches();busy=false;checkGame();
 }
-
 function findMatches(){
- let found=new Set();
-
- for(let r=0;r<SIZE;r++){
-  for(let c=0;c<SIZE-2;c++){
-   const value=board[r][c];
-   if(value && value!=="🌈" &&
-    board[r][c+1]===value&&board[r][c+2]===value){
-    let k=c;
-    while(k<SIZE&&board[r][k]===value){
-     found.add(r+","+k);
-     k++;
-    }
-   }
+ const found=new Set();
+ for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE-2;c++){
+  const v=board[r][c];if(v&&v!=="🌈"&&board[r][c+1]===v&&board[r][c+2]===v){
+   let k=c;while(k<SIZE&&board[r][k]===v){found.add(r+","+k);k++;}
   }
  }
-
- for(let c=0;c<SIZE;c++){
-  for(let r=0;r<SIZE-2;r++){
-   const value=board[r][c];
-   if(value && value!=="🌈" &&
-    board[r+1][c]===value&&board[r+2][c]===value){
-    let k=r;
-    while(k<SIZE&&board[k][c]===value){
-     found.add(k+","+c);
-     k++;
-    }
-   }
+ for(let c=0;c<SIZE;c++)for(let r=0;r<SIZE-2;r++){
+  const v=board[r][c];if(v&&v!=="🌈"&&board[r+1][c]===v&&board[r+2][c]===v){
+   let k=r;while(k<SIZE&&board[k][c]===v){found.add(k+","+c);k++;}
   }
  }
-
  return [...found].map(x=>x.split(",").map(Number));
 }
-
 async function resolveMatches(){
- let matches=findMatches();
- let combo=0;
-
+ let matches=findMatches(),combo=0;
  while(matches.length){
-  combo++;
-  const points=matches.length*10*combo;
-  score+=points;
-  coins+=Math.floor(matches.length/3);
-  $("message").textContent=
-   "✨ "+matches.length+" candies blasted! +"+points;
-
-  for(const [r,c] of matches){
-   board[r][c]=null;
-  }
-
-  render();
-  await sleep(150);
-
-  for(let c=0;c<SIZE;c++){
-   let values=[];
-   for(let r=SIZE-1;r>=0;r--){
-    if(board[r][c]!==null)values.push(board[r][c]);
-   }
-
-   for(let r=SIZE-1;r>=0;r--){
-    board[r][c]=values[SIZE-1-r]||null;
-   }
-
-   let index=SIZE-values.length;
-   for(let r=0;r<index;r++){
-    board[r][c]=randomCandy();
-   }
-  }
-
-  render();
-  await sleep(150);
-  matches=findMatches();
+  combo++;const points=matches.length*10*combo;score+=points;coins+=Math.floor(matches.length/3);
+  $("message").textContent="✨ "+matches.length+" candies blasted! +"+points+" points";
+  for(const [r,c] of matches)board[r][c]=null;
+  render();await sleep(120);await refillBoard();await sleep(130);matches=findMatches();
  }
-
  save();
 }
-
-function checkGame(){
- if(score>=targetScore()){
-  won=true;
-  $("modalTitle").textContent="🏆 Level Complete!";
-  $("modalText").textContent=
-   "Amazing! You completed level "+level+"!";
-  $("overlay").style.display="flex";
-  return;
- }
-
- if(moves<=0){
-  lost=true;
-  lives=Math.max(0,lives-1);
-  $("modalTitle").textContent="Level Failed!";
-  $("modalText").textContent="Try again! You can do it.";
-  $("overlay").style.display="flex";
- }
-
- if(lives<=0){
-  lost=true;
-  $("modalTitle").textContent="❤️ Out of Lives!";
-  $("modalText").textContent="Come back later or restart your adventure.";
-  $("overlay").style.display="flex";
- }
-
- save();
- updateStats();
-}
-
-function nextLevel(){
- if(won){
-  level++;
-  score=0;
-  moves=20;
-  won=false;
-  lost=false;
-  createBoard();
-  $("message").textContent="Welcome to level "+level+"!";
-  save();
-  $("overlay").style.display="none";
- }else{
-  closeOverlay();
- }
-}
-
-function closeOverlay(){
- $("overlay").style.display="none";
-}
-
-function restartLevel(){
- if(busy)return;
- moves=20;
- score=0;
- won=false;
- lost=false;
- selected=null;
- createBoard();
- $("message").textContent="Level restarted!";
- save();
-}
-
-function sleep(ms){
- return new Promise(resolve=>setTimeout(resolve,ms));
-}
-
-function useBooster(type){
- if(busy||won||lost)return;
-
- if(type==="bomb"){
-  if(bombs<=0){
-   $("message").textContent="No bombs left!";
-   return;
-  }
-  boosterMode="bomb";
- }
-
- if(type==="rainbow"){
-  if(rainbows<=0){
-   $("message").textContent="No rainbow boosters left!";
-   return;
-  }
-  boosterMode="rainbow";
- }
-
- if(type==="shuffle"){
-  board=Array.from({length:SIZE},()=>Array.from(
-   {length:SIZE},randomCandy
-  ));
-  selected=null;
-  render();
-  $("message").textContent="Board shuffled!";
- }
-}
-
-async function applyBooster(r,c){
- const type=boosterMode;
- boosterMode=null;
- busy=true;
-
- if(type==="bomb"){
-  bombs--;
-  for(let i=Math.max(0,r-1);i<=Math.min(7,r+1);i++){
-   for(let j=Math.max(0,c-1);j<=Math.min(7,c+1);j++){
-    board[i][j]=null;
-   }
-  }
- }else if(type==="rainbow"){
-  rainbows--;
-  const chosen=board[r][c];
-  for(let i=0;i<SIZE;i++){
-   for(let j=0;j<SIZE;j++){
-    if(board[i][j]===chosen)board[i][j]=null;
-   }
-  }
- }
-
- score+=90;
- moves--;
- await refillBoard();
- await resolveMatches();
- busy=false;
- render();
- checkGame();
-}
-
 async function refillBoard(){
  for(let c=0;c<SIZE;c++){
-  let values=[];
-  for(let r=SIZE-1;r>=0;r--){
-   if(board[r][c]!==null)values.push(board[r][c]);
-  }
-
-  for(let r=SIZE-1;r>=0;r--){
-   board[r][c]=values[SIZE-1-r]||null;
-  }
-
-  for(let r=0;r<SIZE-values.length;r++){
-   board[r][c]=randomCandy();
-  }
+  const values=[];for(let r=SIZE-1;r>=0;r--)if(board[r][c]!==null)values.push(board[r][c]);
+  for(let r=SIZE-1;r>=0;r--)board[r][c]=values[SIZE-1-r]||null;
+  for(let r=0;r<SIZE-values.length;r++)board[r][c]=randomCandy();
  }
- render();
+ render(true);
 }
-
-function toggleSound(){
- sound=!sound;
- updateStats();
+function checkGame(){
+ if(score>=targetScore()){
+  won=true;$("modalTitle").textContent="🏆 Level Complete!";
+  $("modalText").textContent="Sweet victory! You cleared level "+level+".";
+  $("modalPrimary").textContent="NEXT LEVEL";$("overlay").style.display="flex";
+ }else if(moves<=0){
+  lost=true;lives=Math.max(0,lives-1);
+  $("modalTitle").textContent=lives===0?"❤️ Out of Lives!":"💫 Level Failed";
+  $("modalText").textContent=lives===0?"You are out of lives. Restart to try again.":"No moves left. Try this level again!";
+  $("modalPrimary").textContent="TRY AGAIN";$("overlay").style.display="flex";
+ }
+ save();updateStats();
 }
-
+function nextLevel(){
+ $("overlay").style.display="none";
+ if(won){level++;score=0;moves=20;won=false;lost=false;createBoard();$("message").textContent="Welcome to level "+level+"!";}
+ else if(lost){if(lives===0)lives=5;score=0;moves=20;lost=false;createBoard();$("message").textContent="Let's try again!";}
+ save();updateStats();
+}
+function closeOverlay(){$("overlay").style.display="none";}
+function restartLevel(){if(busy)return;score=0;moves=20;won=false;lost=false;boosterMode=null;createBoard();$("message").textContent="Level restarted — good luck!";save();}
+function useBooster(type){
+ if(busy||won||lost)return;
+ if(type==="bomb"){if(!bombs){$("message").textContent="No bombs left. Collect a daily gift!";return;}boosterMode="bomb";}
+ if(type==="rainbow"){if(!rainbows){$("message").textContent="No rainbow boosters left. Collect a daily gift!";return;}boosterMode="rainbow";}
+ if(type==="shuffle"){board=Array.from({length:SIZE},()=>Array.from({length:SIZE},randomCandy));selected=null;render(true);$("message").textContent="Board shuffled!";return;}
+ $("message").textContent="Tap a candy on the board to use your power-up.";
+}
+async function applyBooster(r,c){
+ const type=boosterMode;boosterMode=null;busy=true;
+ if(type==="bomb"){
+  bombs--;for(let i=Math.max(0,r-1);i<=Math.min(7,r+1);i++)for(let j=Math.max(0,c-1);j<=Math.min(7,c+1);j++)board[i][j]=null;
+ }else if(type==="rainbow"){
+  rainbows--;const chosen=board[r][c];for(let i=0;i<SIZE;i++)for(let j=0;j<SIZE;j++)if(board[i][j]===chosen)board[i][j]=null;
+ }
+ score+=90;moves--;await refillBoard();await resolveMatches();busy=false;checkGame();
+}
+function toggleSound(){sound=!sound;updateStats();}
 function playSound(){
  if(!sound)return;
- try{
-  const ctx=new(window.AudioContext||window.webkitAudioContext)();
-  const osc=ctx.createOscillator();
-  const gain=ctx.createGain();
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.frequency.value=520;
-  gain.gain.value=.06;
-  osc.start();
-  osc.stop(ctx.currentTime+.09);
- }catch(e){}
+ try{const ctx=new(window.AudioContext||window.webkitAudioContext)(),osc=ctx.createOscillator(),gain=ctx.createGain();
+ osc.connect(gain);gain.connect(ctx.destination);osc.frequency.value=520;gain.gain.value=.045;osc.start();osc.stop(ctx.currentTime+.08);}catch(e){}
 }
-
 function dailyReward(){
  const today=new Date().toDateString();
- const previous=localStorage.getItem("candyDailyReward");
-
- if(previous===today){
-  $("message").textContent="Daily reward already collected!";
-  return;
- }
-
- coins+=100;
- bombs++;
- rainbows++;
- localStorage.setItem("candyDailyReward",today);
- $("message").textContent="🎁 Daily reward: 100 coins and boosters!";
- updateStats();
- save();
+ if(localStorage.getItem("candyDailyReward")===today){$("message").textContent="Your daily gift has already been collected!";return;}
+ coins+=100;bombs++;rainbows++;localStorage.setItem("candyDailyReward",today);
+ $("message").textContent="🎁 Daily gift collected: 100 coins + 1 bomb + 1 rainbow!";
+ updateStats();save();
 }
-
-function showHome(){
- $("message").textContent=
- "Welcome to Candy Blast Deluxe! Complete levels to win!";
-}
-
-createBoard();
-save();
+function showHome(){$("message").textContent="Welcome back, candy champion! Match candies to reach your target.";}
+createBoard();updateStats();save();
 </script>
-
 </body>
-  </html>
+ </html>
