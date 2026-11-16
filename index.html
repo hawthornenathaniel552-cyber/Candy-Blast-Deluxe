@@ -60,6 +60,8 @@ button.secondary{background:linear-gradient(#f8d5ff,#d78cff);box-shadow:0 4px 0 
  <button class="action secondary" id="shuffle">🔀 Shuffle</button>
  <button class="action" id="sound">🔊 Sound ON</button>
  <button class="action secondary" id="restart">↻ Restart</button>
+ <button class="action" id="mapButton">🗺️ Level Map</button>
+ <button class="action secondary" id="dailyButton">🎁 Daily Gift</button>
 </div>
 <div class="legend">✨ 4 in a row = Striped candy • 5 in a row = Rainbow candy • T/L match = Bomb candy</div>
 <p class="note">Swap neighbouring candies. Tap a special candy and swap it with a neighbour to activate it. Progress saves on this device.</p>
@@ -69,20 +71,57 @@ button.secondary{background:linear-gradient(#f8d5ff,#d78cff);box-shadow:0 4px 0 
 <h2 id="modalTitle">Level complete!</h2><p id="modalText"></p>
 <button class="action" id="modalButton">Continue</button>
 </div></div>
+<div class="overlay" id="mapOverlay"><div class="modal map-modal">
+<h2>🗺️ Candy Adventure</h2>
+<p id="mapSummary">Your level progress</p>
+<div id="levelMap" class="level-map"></div>
+<button class="action" id="closeMap">Close Map</button>
+</div></div>
+<style>
+.map-modal{max-height:85vh;overflow:auto}
+.level-map{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:14px 0}
+.level-node{border:0;border-radius:12px;padding:10px 2px;font-weight:900;color:#351044;background:linear-gradient(#fff,#e8d5ff);box-shadow:0 3px 0 #9270b8}
+.level-node.unlocked{background:linear-gradient(#fff3a5,#ffc94e);box-shadow:0 3px 0 #a45b18}
+.level-node.current{outline:3px solid #ff75c8}
+.level-node:disabled{opacity:.38;filter:grayscale(1)}
+.level-stars{display:block;font-size:10px;letter-spacing:-1px;margin-top:2px}
+</style>
 <script>
 (() => {
 'use strict';
 const SIZE=8, CANDIES=['🍬','🍭','🍒','🍇','🍊','🍓','🫐'];
 const SPECIAL={H:'STRIPE_H',V:'STRIPE_V',B:'BOMB_SPECIAL',R:'RAINBOW_SPECIAL'};
 const $=id=>document.getElementById(id);
-let level=1,score=0,moves=20,bombs=2,rainbows=2,board=[],selected=null,locked=false,soundOn=true,audioCtx=null;
+let level=1,score=0,moves=20,bombs=2,rainbows=2,coins=0,highestLevel=1,starsByLevel={},board=[],selected=null,locked=false,soundOn=true,audioCtx=null;
 let saved={};
 try{saved=JSON.parse(localStorage.getItem('candyBlastProgressV2')||'{}')||{}}catch(e){}
 level=Math.max(1,Math.min(100,Number(saved.level)||1));
 bombs=Math.max(0,Number(saved.bombs??2));rainbows=Math.max(0,Number(saved.rainbows??2));
+coins=Math.max(0,Number(saved.coins)||0);
+highestLevel=Math.max(level,Math.min(100,Number(saved.highestLevel)||level));
+starsByLevel=saved.starsByLevel&&typeof saved.starsByLevel==='object'?saved.starsByLevel:{};
 function targetFor(l){return 300+(l-1)*180}
 function movesFor(l){return Math.max(12,20-Math.floor((l-1)/12))}
-function save(){try{localStorage.setItem('candyBlastProgressV2',JSON.stringify({level,best:Math.max(Number(saved.best)||0,level),bombs,rainbows}))}catch(e){}}
+function save(){try{localStorage.setItem('candyBlastProgressV2',JSON.stringify({level,highestLevel,best:Math.max(Number(saved.best)||0,highestLevel),bombs,rainbows,coins,starsByLevel,dailyGiftDate:saved.dailyGiftDate||''}))}catch(e){}}
+function renderMap(){
+ $('mapSummary').textContent=`Unlocked ${highestLevel} of 100 levels • ${coins} coins`;
+ const grid=$('levelMap');grid.innerHTML='';
+ for(let n=1;n<=100;n++){
+  const btn=document.createElement('button');btn.className='level-node'+(n<=highestLevel?' unlocked':'')+(n===level?' current':'');
+  btn.disabled=n>highestLevel;btn.innerHTML=`${n}<span class="level-stars">${'★'.repeat(Number(starsByLevel[n])||0)}${'☆'.repeat(3-(Number(starsByLevel[n])||0))}</span>`;
+  btn.title=n<=highestLevel?`Play level ${n}`:'Locked';
+  btn.onclick=()=>{level=n;score=0;restartLevel();$('mapOverlay').classList.remove('show')};
+  grid.appendChild(btn);
+ }
+}
+function openMap(){renderMap();$('mapOverlay').classList.add('show')}
+function claimDailyGift(){
+ const today=new Date().toLocaleDateString('en-CA');
+ if(saved.dailyGiftDate===today){$('message').textContent='🎁 You already claimed today’s gift. Come back tomorrow!';return}
+ coins+=50;bombs=Math.min(5,bombs+1);saved.dailyGiftDate=today;save();
+ $('message').textContent='🎉 Daily gift claimed: 50 coins and 1 Bomb booster!';
+ playTone(760);
+}
 function randomCandy(){return CANDIES[Math.floor(Math.random()*CANDIES.length)]}
 function isSpecial(v){return Object.values(SPECIAL).includes(v)}
 function display(v){return v===SPECIAL.H?'↔️':v===SPECIAL.V?'↕️':v===SPECIAL.B?'💣':v===SPECIAL.R?'🌈':v||''}
@@ -191,9 +230,14 @@ async function resolveMatches(){
 }
 function showModal(title,text,button,fn){$('modalTitle').textContent=title;$('modalText').textContent=text;$('modalButton').textContent=button;$('modalButton').onclick=()=>{$('overlay').classList.remove('show');fn()};$('overlay').classList.add('show')}
 function completeLevel(){
- const finished=level;save();
+ const finished=level;
+ const earned=moves>=12?3:moves>=6?2:1;
+ starsByLevel[finished]=Math.max(Number(starsByLevel[finished])||0,earned);
+ coins+=50+earned*25;
+ highestLevel=Math.max(highestLevel,Math.min(100,finished+1));
+ save();
  if(level>=100){showModal('🎉 You completed all 100 levels!',`Amazing! You reached level 100 with a score of ${score}.`,'Play again',()=>{level=1;score=0;restartLevel()});return}
- showModal('🎉 Level complete!',`You conquered level ${finished}! Bonus: ${100+finished*10} points.`,'Next level',()=>{score=0;level++;bombs=Math.min(5,bombs+1);rainbows=Math.min(5,rainbows+1);save();restartLevel()});
+ showModal('🎉 Level complete!',`You conquered level ${finished}! You earned ${'★'.repeat(earned)} (${earned}/3 stars), ${50+earned*25} coins, and a power-up bonus.`,'Next level',()=>{score=0;level++;bombs=Math.min(5,bombs+1);rainbows=Math.min(5,rainbows+1);save();restartLevel()});
 }
 function restartLevel(){score=0;moves=movesFor(level);selected=null;makeBoard();$('message').textContent=`Level ${level}: reach ${targetFor(level)} points!`;render();save()}
 function usePower(type){
@@ -206,9 +250,12 @@ function usePower(type){
 $('bomb').onclick=()=>usePower('bomb');$('rainbow').onclick=()=>usePower('rainbow');
 $('shuffle').onclick=()=>{if(locked)return;makeBoard();selected=null;$('message').textContent='Board shuffled!';render()};
 $('restart').onclick=restartLevel;
+$('mapButton').onclick=openMap;
+$('closeMap').onclick=()=>$('mapOverlay').classList.remove('show');
+$('dailyButton').onclick=claimDailyGift;
 $('sound').onclick=()=>{soundOn=!soundOn;$('sound').textContent=soundOn?'🔊 Sound ON':'🔇 Sound OFF'};
 makeBoard();moves=movesFor(level);render();
 })();
 </script>
 </body>
-</html>
+ </html>
