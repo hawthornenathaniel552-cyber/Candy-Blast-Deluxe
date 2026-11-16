@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#7116a8">
-<meta name="description" content="Play Candy Blast Deluxe: match candies, use power-ups and conquer 100 exciting levels.">
+<meta name="description" content="Play Candy Blast Deluxe: match candies, create special candies and conquer 100 exciting levels.">
 <title>Candy Blast Deluxe</title>
 <style>
-:root{--purple:#7116a8;--deep:#35105c;--pink:#ff5cba;--gold:#ffd45c;--panel:rgba(255,255,255,.14)}
+:root{--purple:#7116a8;--deep:#35105c;--gold:#ffd45c;--panel:rgba(255,255,255,.14)}
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;font-family:system-ui,Arial,sans-serif;color:#fff;background:radial-gradient(circle at 50% 0%,#b84be7 0,#7020a4 42%,#271044 100%);display:flex;justify-content:center;padding:14px}
 .app{width:min(100%,520px);text-align:center}
@@ -22,16 +22,17 @@ h1{font-size:clamp(30px,8vw,44px);margin:0;text-shadow:0 4px 0 #4b176f,0 8px 18p
 .progress-wrap{height:9px;background:#38134f;border-radius:9px;overflow:hidden;margin:9px 2px 12px}
 #progress{height:100%;width:0;background:linear-gradient(90deg,#ff72c8,#ffe46d);transition:width .25s}
 #board{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;padding:7px;background:#40145f;border-radius:16px;touch-action:manipulation}
-.cell{aspect-ratio:1;border:0;border-radius:11px;background:linear-gradient(145deg,#ffffff35,#ffffff0d);display:grid;place-items:center;font-size:clamp(23px,7vw,36px);padding:0;cursor:pointer;box-shadow:inset 0 2px 4px #ffffff22,0 3px 0 #210b39;transition:transform .12s,filter .12s}
+.cell{aspect-ratio:1;border:0;border-radius:11px;background:linear-gradient(145deg,#ffffff35,#ffffff0d);display:grid;place-items:center;font-size:clamp(22px,7vw,36px);padding:0;cursor:pointer;box-shadow:inset 0 2px 4px #ffffff22,0 3px 0 #210b39;transition:transform .12s,filter .12s}
 .cell:active{transform:scale(.92)}
 .cell.selected{outline:3px solid var(--gold);filter:brightness(1.25);transform:scale(.94)}
-.cell.empty{visibility:hidden}
+.cell.special{background:linear-gradient(145deg,#fff3a5,#e58bff);box-shadow:0 0 10px #ffe46d,inset 0 2px 4px #fff}
 .controls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}
 button.action{border:0;border-radius:13px;padding:10px 13px;color:#351044;font-weight:800;background:linear-gradient(#fff3a5,#ffc94e);box-shadow:0 4px 0 #a45b18;cursor:pointer}
 button.action:disabled{opacity:.45;cursor:not-allowed}
 button.secondary{background:linear-gradient(#f8d5ff,#d78cff);box-shadow:0 4px 0 #73379c}
 .message{min-height:26px;margin:10px 0 0;font-weight:700;color:#fff2a8}
 .note{font-size:12px;color:#f0d8ff;margin:10px 4px}
+.legend{font-size:12px;line-height:1.6;color:#ffe9ff;margin:8px 2px 0}
 .overlay{position:fixed;inset:0;background:#170725c9;display:none;place-items:center;padding:20px;z-index:5}
 .overlay.show{display:grid}
 .modal{width:min(100%,360px);background:linear-gradient(150deg,#9b37c6,#48156e);border:2px solid #f7c9ff;border-radius:22px;padding:24px;box-shadow:0 15px 60px #0009}
@@ -60,7 +61,8 @@ button.secondary{background:linear-gradient(#f8d5ff,#d78cff);box-shadow:0 4px 0 
  <button class="action" id="sound">🔊 Sound ON</button>
  <button class="action secondary" id="restart">↻ Restart</button>
 </div>
-<p class="note">Swap neighbouring candies. Match 3 or more in a row or column. Progress saves on this device.</p>
+<div class="legend">✨ 4 in a row = Striped candy • 5 in a row = Rainbow candy • T/L match = Bomb candy</div>
+<p class="note">Swap neighbouring candies. Tap a special candy and swap it with a neighbour to activate it. Progress saves on this device.</p>
 </section>
 </main>
 <div class="overlay" id="overlay"><div class="modal">
@@ -71,14 +73,19 @@ button.secondary{background:linear-gradient(#f8d5ff,#d78cff);box-shadow:0 4px 0 
 (() => {
 'use strict';
 const SIZE=8, CANDIES=['🍬','🍭','🍒','🍇','🍊','🍓','🫐'];
+const SPECIAL={H:'STRIPE_H',V:'STRIPE_V',B:'BOMB_SPECIAL',R:'RAINBOW_SPECIAL'};
 const $=id=>document.getElementById(id);
 let level=1,score=0,moves=20,bombs=2,rainbows=2,board=[],selected=null,locked=false,soundOn=true,audioCtx=null;
-const saved=(()=>{try{return JSON.parse(localStorage.getItem('candyBlastProgressV2')||'{}')}catch(e){return {}}})();
+let saved={};
+try{saved=JSON.parse(localStorage.getItem('candyBlastProgressV2')||'{}')||{}}catch(e){}
 level=Math.max(1,Math.min(100,Number(saved.level)||1));
+bombs=Math.max(0,Number(saved.bombs??2));rainbows=Math.max(0,Number(saved.rainbows??2));
 function targetFor(l){return 300+(l-1)*180}
 function movesFor(l){return Math.max(12,20-Math.floor((l-1)/12))}
-function save(){try{localStorage.setItem('candyBlastProgressV2',JSON.stringify({level,score:0,best:Math.max(Number(saved.best)||0,level)}))}catch(e){}}
+function save(){try{localStorage.setItem('candyBlastProgressV2',JSON.stringify({level,best:Math.max(Number(saved.best)||0,level),bombs,rainbows}))}catch(e){}}
 function randomCandy(){return CANDIES[Math.floor(Math.random()*CANDIES.length)]}
+function isSpecial(v){return Object.values(SPECIAL).includes(v)}
+function display(v){return v===SPECIAL.H?'↔️':v===SPECIAL.V?'↕️':v===SPECIAL.B?'💣':v===SPECIAL.R?'🌈':v||''}
 function makeBoard(){
  board=Array.from({length:SIZE},()=>Array(SIZE).fill(''));
  for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
@@ -91,67 +98,108 @@ function render(){
  $('progress').style.width=Math.min(100,score/targetFor(level)*100)+'%';
  const root=$('board');root.innerHTML='';
  for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
-  const b=document.createElement('button');b.className='cell'+(selected&&selected.r===r&&selected.c===c?' selected':'');
-  b.textContent=board[r][c]||'';b.setAttribute('aria-label',`row ${r+1}, column ${c+1}`);
+  const b=document.createElement('button');const v=board[r][c];
+  b.className='cell'+(selected&&selected.r===r&&selected.c===c?' selected':'')+(isSpecial(v)?' special':'');
+  b.textContent=display(v);b.setAttribute('aria-label',`row ${r+1}, column ${c+1}`);
   b.addEventListener('click',()=>tap(r,c));root.appendChild(b);
  }
  $('bomb').textContent=`💣 Bomb (${bombs})`;$('rainbow').textContent=`🌈 Rainbow (${rainbows})`;
  $('bomb').disabled=locked||bombs<1;$('rainbow').disabled=locked||rainbows<1;$('shuffle').disabled=locked;
 }
 function playTone(freq=520){if(!soundOn)return;try{audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.frequency.value=freq;o.type='sine';g.gain.value=.045;o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.09)}catch(e){}}
-function matches(){
- const found=new Set();
- for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
-  const v=board[r][c];if(!v)continue;
-  let n=1;while(c+n<SIZE&&board[r][c+n]===v)n++;
-  if(n>=3)for(let k=0;k<n;k++)found.add(r+','+(c+k));
-  n=1;while(r+n<SIZE&&board[r+n][c]===v)n++;
-  if(n>=3)for(let k=0;k<n;k++)found.add((r+k)+','+c);
- }
- return [...found].map(s=>s.split(',').map(Number));
-}
+function wait(ms){return new Promise(res=>setTimeout(res,ms))}
 function swap(a,b){const t=board[a.r][a.c];board[a.r][a.c]=board[b.r][b.c];board[b.r][b.c]=t}
+function getRuns(){
+ const runs=[];
+ for(let r=0;r<SIZE;r++){let c=0;while(c<SIZE){const v=board[r][c];if(!v||isSpecial(v)){c++;continue}let end=c+1;while(end<SIZE&&board[r][end]===v)end++;if(end-c>=3)runs.push({cells:Array.from({length:end-c},(_,i)=>[r,c+i]),dir:'H',type:v});c=end}}
+ for(let c=0;c<SIZE;c++){let r=0;while(r<SIZE){const v=board[r][c];if(!v||isSpecial(v)){r++;continue}let end=r+1;while(end<SIZE&&board[end][c]===v)end++;if(end-r>=3)runs.push({cells:Array.from({length:end-r},(_,i)=>[r+i,c]),dir:'V',type:v});r=end}}
+ return runs;
+}
+function specialFor(runs){
+ const counts=new Map();runs.forEach(run=>run.cells.forEach(([r,c])=>{const k=r+','+c;counts.set(k,(counts.get(k)||0)+1)}));
+ const intersections=[...counts].filter(([,n])=>n>1).map(([k])=>k);
+ if(intersections.length)return {key:intersections[0],kind:SPECIAL.B};
+ const longest=[...runs].sort((a,b)=>b.cells.length-a.cells.length)[0];
+ if(!longest)return null;
+ if(longest.cells.length>=5)return {key:longest.cells[Math.floor(longest.cells.length/2)].join(','),kind:SPECIAL.R};
+ if(longest.cells.length===4)return {key:longest.cells[1].join(','),kind:longest.dir==='H'?SPECIAL.H:SPECIAL.V};
+ return null;
+}
+function expandSpecials(coords){
+ const set=new Set(coords.map(([r,c])=>r+','+c)),queue=[...set];
+ while(queue.length){
+  const key=queue.pop(),[r,c]=key.split(',').map(Number),v=board[r][c];
+  let extra=[];
+  if(v===SPECIAL.H)for(let x=0;x<SIZE;x++)extra.push([r,x]);
+  else if(v===SPECIAL.V)for(let y=0;y<SIZE;y++)extra.push([y,c]);
+  else if(v===SPECIAL.B)for(let y=Math.max(0,r-1);y<=Math.min(SIZE-1,r+1);y++)for(let x=Math.max(0,c-1);x<=Math.min(SIZE-1,c+1);x++)extra.push([y,x]);
+  for(const [y,x] of extra){const k=y+','+x;if(!set.has(k)){set.add(k);queue.push(k)}}
+ }
+ return [...set].map(k=>k.split(',').map(Number));
+}
+function activateSwapSpecial(a,b){
+ const va=board[a.r][a.c],vb=board[b.r][b.c];
+ if(!isSpecial(va)&&!isSpecial(vb))return false;
+ if(va===SPECIAL.R||vb===SPECIAL.R){
+  const other=va===SPECIAL.R?vb:va;
+  const chosen=isSpecial(other)?randomCandy():other;
+  for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)if(board[r][c]===chosen||board[r][c]===SPECIAL.R)board[r][c]='';
+  score+=120;
+ }else{
+  const hit=[];
+  if(isSpecial(va))hit.push([a.r,a.c]);if(isSpecial(vb))hit.push([b.r,b.c]);
+  const cells=expandSpecials(hit);
+  cells.forEach(([r,c])=>board[r][c]='');score+=cells.length*10;
+ }
+ moves--;playTone(820);return true;
+}
 function tap(r,c){
  if(locked)return;
  if(!selected){selected={r,c};render();return}
  const a=selected,b={r,c};selected=null;
  if(a.r===r&&a.c===c){render();return}
  if(Math.abs(a.r-r)+Math.abs(a.c-c)!==1){selected=b;render();return}
- swap(a,b);const m=matches();
- if(!m.length){swap(a,b);$('message').textContent='That swap did not make a match. Try again!';render();return}
+ swap(a,b);
+ if(activateSwapSpecial(a,b)){render();resolveMatches();return}
+ const runs=getRuns();
+ if(!runs.length){swap(a,b);$('message').textContent='That swap did not make a match. Try again!';render();return}
  moves--;playTone();render();resolveMatches();
 }
 async function resolveMatches(){
- locked=true;render();
- let chain=0;
+ locked=true;render();let chain=0;
  while(true){
-  const m=matches();if(!m.length)break;
-  chain++;score+=m.length*10*chain;
-  m.forEach(([r,c])=>board[r][c]='');
-  render();await wait(130);
+  const runs=getRuns();if(!runs.length)break;
+  chain++;
+  const create=specialFor(runs);
+  let coords=[...new Set(runs.flatMap(run=>run.cells.map(([r,c])=>r+','+c)))].map(k=>k.split(',').map(Number));
+  coords=expandSpecials(coords);
+  const keep=create?create.key:null;
+  score+=coords.length*10*chain;
+  coords.forEach(([r,c])=>{if(r+','+c!==keep)board[r][c]=''});
+  if(create){const [kr,kc]=create.key.split(',').map(Number);board[kr][kc]=create.kind;$('message').textContent=create.kind===SPECIAL.R?'🌈 Rainbow candy created!':create.kind===SPECIAL.B?'💣 Bomb candy created!':'✨ Striped candy created!'}
+  render();await wait(160);
   for(let c=0;c<SIZE;c++){
-   let vals=[];for(let r=SIZE-1;r>=0;r--)if(board[r][c])vals.push(board[r][c]);
+   const vals=[];for(let r=SIZE-1;r>=0;r--)if(board[r][c])vals.push(board[r][c]);
    for(let r=SIZE-1;r>=0;r--)board[r][c]=vals[SIZE-1-r]||randomCandy();
   }
-  await wait(130);
+  await wait(140);
  }
- locked=false;render();
+ locked=false;render();save();
  if(score>=targetFor(level)){completeLevel();return}
- if(moves<=0){showModal('Level not completed',`You scored ${score}. Target: ${targetFor(level)}. Try this level again.`, 'Try again',restartLevel);return}
+ if(moves<=0){showModal('Level not completed',`You scored ${score}. Target: ${targetFor(level)}. Try this level again.`,'Try again',restartLevel);return}
  $('message').textContent='Nice match! Keep going!';
 }
-function wait(ms){return new Promise(res=>setTimeout(res,ms))}
-function showModal(title,text,button,fn){$('modalTitle').textContent=title;$('modalText').textContent=text;$('modalButton').textContent=button;$('modalButton').onclick=()=>{ $('overlay').classList.remove('show');fn()};$('overlay').classList.add('show')}
+function showModal(title,text,button,fn){$('modalTitle').textContent=title;$('modalText').textContent=text;$('modalButton').textContent=button;$('modalButton').onclick=()=>{$('overlay').classList.remove('show');fn()};$('overlay').classList.add('show')}
 function completeLevel(){
  const finished=level;save();
  if(level>=100){showModal('🎉 You completed all 100 levels!',`Amazing! You reached level 100 with a score of ${score}.`,'Play again',()=>{level=1;score=0;restartLevel()});return}
- showModal('🎉 Level complete!',`You conquered level ${finished}! Bonus: ${100+finished*10} points.`, 'Next level',()=>{score=0;level++;bombs=Math.min(5,bombs+1);rainbows=Math.min(5,rainbows+1);restartLevel()});
+ showModal('🎉 Level complete!',`You conquered level ${finished}! Bonus: ${100+finished*10} points.`,'Next level',()=>{score=0;level++;bombs=Math.min(5,bombs+1);rainbows=Math.min(5,rainbows+1);save();restartLevel()});
 }
-function restartLevel(){score=0;moves=movesFor(level);selected=null;makeBoard();$('message').textContent=`Level ${level}: reach ${targetFor(level)} points!`;render()}
+function restartLevel(){score=0;moves=movesFor(level);selected=null;makeBoard();$('message').textContent=`Level ${level}: reach ${targetFor(level)} points!`;render();save()}
 function usePower(type){
  if(locked)return;
- if(type==='bomb'&&bombs>0){bombs--;const r=Math.floor(Math.random()*SIZE),c=Math.floor(Math.random()*SIZE);for(let y=Math.max(0,r-1);y<=Math.min(SIZE-1,r+1);y++)for(let x=Math.max(0,c-1);x<=Math.min(SIZE-1,c+1);x++)board[y][x]='';score+=90;}
- else if(type==='rainbow'&&rainbows>0){rainbows--;const v=randomCandy();for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)if(board[r][c]===v)board[r][c]='';score+=100;}
+ if(type==='bomb'&&bombs>0){bombs--;const r=Math.floor(Math.random()*SIZE),c=Math.floor(Math.random()*SIZE);for(let y=Math.max(0,r-1);y<=Math.min(SIZE-1,r+1);y++)for(let x=Math.max(0,c-1);x<=Math.min(SIZE-1,c+1);x++)board[y][x]='';score+=90}
+ else if(type==='rainbow'&&rainbows>0){rainbows--;const v=randomCandy();for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)if(board[r][c]===v)board[r][c]='';score+=100}
  else return;
  moves=Math.max(0,moves-1);playTone(760);render();resolveMatches();
 }
